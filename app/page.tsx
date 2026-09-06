@@ -31,11 +31,15 @@ export default function BookingPage() {
       
       let slotsArray: string[] = [];
       if (Array.isArray(data)) {
-        slotsArray = data.map(item => (typeof item === 'string' ? item : (item.summary || item.slot || JSON.stringify(item))));
+        slotsArray = data
+          .map(item => (typeof item === 'string' ? item : (item.slot || item.time || item.summary || JSON.stringify(item))))
+          .filter(item => !item.toLowerCase().includes("booking"));
       } else if (data && typeof data === 'object') {
         const possibleSlots = data.slots || data.data || data.result;
         if (Array.isArray(possibleSlots)) {
-          slotsArray = possibleSlots.map(item => (typeof item === 'string' ? item : (item.summary || item.slot || JSON.stringify(item))));
+          slotsArray = possibleSlots
+            .map(item => (typeof item === 'string' ? item : (item.slot || item.time || item.summary || JSON.stringify(item))))
+            .filter(item => !item.toLowerCase().includes("booking"));
         }
       }
 
