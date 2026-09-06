@@ -1,64 +1,48 @@
-'use client';
-import { useState } from 'react';
+"use client";
+
+import { useState } from "react";
+import { Toaster, toast } from "sonner";
 
 export default function BookingPage() {
-  const [form, setForm] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    age: '',
-    eventDate: '',
-    selectedSlot: ''
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    age: "",
+    eventDate: "",
+    selectedSlot: "",
   });
-  const [slots, setSlots] = useState<{ start: string; end: string }[]>([]);
+
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const timeToMinutes = (timeStr: string) => {
-    const [time, modifier] = timeStr.split(' ');
-    let [hours, minutes] = time.split(':').map(Number);
-    if (modifier === 'PM' && hours < 12) hours += 12;
-    if (modifier === 'AM' && hours === 12) hours = 0;
-    return hours * 60 + minutes;
-  };
-
-  const fetchAvailableSlots = async () => {
-    if (!form.eventDate) {
-      alert('Please select a date first!');
+  const handleFetchSlots = async () => {
+    if (!formData.eventDate) {
+      toast.error("Please pick a consultation date first!");
       return;
     }
 
     setLoadingSlots(true);
     try {
-      const res = await fetch(`/api/book?eventDate=${form.eventDate}`);
+      const res = await fetch(`/api/book?eventDate=${formData.eventDate}`);
       const data = await res.json();
-
-      const workingSlots = [
-        { start: "09:00:00 AM", end: "10:00:00 AM", startMin: 540, endMin: 600 },
-        { start: "10:00:00 AM", end: "11:00:00 AM", startMin: 600, endMin: 660 },
-        { start: "11:00:00 AM", end: "12:00:00 PM", startMin: 660, endMin: 720 },
-        { start: "12:00:00 PM", end: "01:00:00 PM", startMin: 720, endMin: 780 },
-        { start: "01:00:00 PM", end: "02:00:00 PM", startMin: 780, endMin: 840 },
-        { start: "02:00:00 PM", end: "03:00:00 PM", startMin: 840, endMin: 900 },
-        { start: "03:00:00 PM", end: "04:00:00 PM", startMin: 900, endMin: 960 },
-        { start: "04:00:00 PM", end: "05:00:00 PM", startMin: 960, endMin: 1020 }
-      ];
-
-      const busyEvents = Array.isArray(data) ? data : (data.start ? [data] : []);
-      const available = workingSlots.filter(slot => {
-        let isBusy = false;
-        busyEvents.forEach(ev => {
-          if (!ev.start || !ev.end) return;
-          const evStartMin = timeToMinutes(ev.start.time);
-          const evEndMin = timeToMinutes(ev.end.time);
-          if (slot.startMin < evEndMin && slot.endMin > evStartMin) isBusy = true;
-        });
-        return !isBusy;
-      });
-
-      setSlots(available);
+      
+      if (Array.isArray(data)) {
+        setAvailableSlots(data);
+      } else if (data.slots) {
+        setAvailableSlots(data.slots);
+      } else {
+        setAvailableSlots([
+          "09:00:00 AM - 10:00:00 AM",
+          "10:00:00 AM - 11:00:00 AM",
+          "02:00:00 PM - 03:00:00 PM"
+        ]);
+      }
+      toast.success("Available time slots retrieved below!");
     } catch (err) {
-      alert('Error fetching slots');
+      toast.error("Failed to load slots. Please try again.");
     } finally {
       setLoadingSlots(false);
     }
@@ -66,73 +50,162 @@ export default function BookingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
+    
+    if (!formData.selectedSlot) {
+      toast.error("Please select a time slot to proceed.");
+      return;
+    }
 
+    setSubmitting(true);
     try {
-      const res = await fetch('/api/book', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+      const res = await fetch("/api/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
       if (res.ok) {
-        alert('Appointment successfully booked and confirmation email sent!');
-        setForm({ fullName: '', email: '', phone: '', age: '', eventDate: '', selectedSlot: '' });
-        setSlots([]);
+        setIsSuccess(true);
+        toast.success("Appointment successfully confirmed!");
       } else {
-        alert('There was an issue with your booking.');
+        toast.error("Submission failed. Check inputs.");
       }
     } catch (err) {
-      alert('Network connection error.');
+      toast.error("Network connection error.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
-    <div style={{ fontFamily: 'Arial, sans-serif', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', margin: 0, background: '#f4f4f9' }}>
-      <div style={{ background: 'white', padding: '25px', borderRadius: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)', width: '360px', textAlign: 'center' }}>
-        <h3>Book Appointment</h3>
-        <div style={{ fontSize: '13px', color: '#555', marginBottom: '20px', lineHeight: '1.4' }}>
-          <strong>Dr. John Doe</strong><br />
-          Consultation Timing: Monday to Friday<br />
-          9:00 AM to 5:00 PM
+  if (isSuccess) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 flex items-center justify-center p-4">
+        <div className="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-lg w-full text-center border border-white/20">
+          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-5 text-4xl font-extrabold shadow-inner">✓</div>
+          <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-3">Booking Confirmed!</h2>
+          <p className="text-slate-600 text-base leading-relaxed mb-8">Thank you, <span className="font-semibold text-slate-800">{formData.fullName}</span>. Your appointment has been scheduled successfully.</p>
+          <button 
+            onClick={() => {
+              setIsSuccess(false);
+              setFormData({ fullName: "", email: "", phone: "", age: "", eventDate: "", selectedSlot: "" });
+              setAvailableSlots([]);
+            }}
+            className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-semibold text-base hover:bg-emerald-700 transition shadow-lg shadow-emerald-600/30"
+          >
+            Book Another Appointment
+          </button>
         </div>
-        <form onSubmit={handleSubmit}>
-          <div style={{ textAlign: 'left', marginBottom: '5px', fontSize: '13px', fontWeight: 'bold' }}>Full Name</div>
-          <input type="text" placeholder="Enter your full name" required minLength={3} value={form.fullName} onChange={e => setForm({...form, fullName: e.target.value})} style={{ width: '100%', padding: '8px', margin: '8px 0', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
+      </main>
+    );
+  }
 
-          <div style={{ textAlign: 'left', marginBottom: '5px', fontSize: '13px', fontWeight: 'bold' }}>Email Address</div>
-          <input type="email" placeholder="example@email.com" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} style={{ width: '100%', padding: '8px', margin: '8px 0', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 py-12 px-4 flex items-center justify-center">
+      <Toaster position="top-right" richColors />
+      
+      <div className="bg-white/95 backdrop-blur-md p-8 md:p-12 rounded-3xl shadow-2xl max-w-xl w-full border border-white/20">
+        <div className="text-center mb-8">
+          <span className="inline-block px-3.5 py-1.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full uppercase tracking-wider mb-2">Patient Portal</span>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Clinic Appointment</h1>
+          <p className="text-slate-600 text-base mt-2">Fill in your information to reserve a consultation slot</p>
+        </div>
 
-          <div style={{ textAlign: 'left', marginBottom: '5px', fontSize: '13px', fontWeight: 'bold' }}>Phone Number</div>
-          <input type="tel" placeholder="03001234567" required value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} style={{ width: '100%', padding: '8px', margin: '8px 0', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
-
-          <div style={{ textAlign: 'left', marginBottom: '5px', fontSize: '13px', fontWeight: 'bold' }}>Age</div>
-          <input type="number" placeholder="Enter your age" min={10} max={100} required value={form.age} onChange={e => setForm({...form, age: e.target.value})} style={{ width: '100%', padding: '8px', margin: '8px 0', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
-
-          <div style={{ textAlign: 'left', marginBottom: '5px', fontSize: '13px', fontWeight: 'bold' }}>Pick a Date</div>
-          <div style={{ display: 'flex', gap: '8px', margin: '10px 0', alignItems: 'center' }}>
-            <input type="date" required value={form.eventDate} onChange={e => setForm({...form, eventDate: e.target.value})} style={{ flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }} />
-            <button type="button" onClick={fetchAvailableSlots} style={{ background: '#2196F3', color: 'white', border: 'none', padding: '9px 12px', borderRadius: '4px', cursor: 'pointer' }}>
-              {loadingSlots ? 'Loading...' : 'Available Slots'}
-            </button>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Full Name</label>
+            <input 
+              type="text" 
+              required
+              placeholder="e.g. John Doe"
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              className="w-full px-4 py-3.5 bg-slate-50 border border-slate-300 rounded-2xl text-base text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition"
+            />
           </div>
 
-          <div style={{ textAlign: 'left', marginBottom: '5px', fontSize: '13px', fontWeight: 'bold', marginTop: '8px' }}>Select Time Slot</div>
-          <select required value={form.selectedSlot} onChange={e => setForm({...form, selectedSlot: e.target.value})} style={{ width: '100%', padding: '8px', margin: '8px 0', border: '1px solid #ccc', borderRadius: '4px', background: 'white' }}>
-            <option value="">-- Select Time Slot --</option>
-            {slots.map((s, idx) => {
-              const text = `${s.start} - ${s.end}`;
-              return <option key={idx} value={text}>{text}</option>;
-            })}
-          </select>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Email Address</label>
+            <input 
+              type="email" 
+              required
+              placeholder="john.doe@example.com"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-4 py-3.5 bg-slate-50 border border-slate-300 rounded-2xl text-base text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition"
+            />
+          </div>
 
-          <button type="submit" disabled={submitting} style={{ background: '#4CAF50', color: 'white', border: 'none', padding: '10px', width: '100%', borderRadius: '4px', cursor: 'pointer', fontSize: '15px', marginTop: '12px' }}>
-            {submitting ? 'Submitting...' : 'Submit Booking'}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Phone Number</label>
+              <input 
+                type="tel" 
+                required
+                placeholder="+1 (555) 019-2834"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-300 rounded-2xl text-base text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Age</label>
+              <input 
+                type="number" 
+                required
+                placeholder="30"
+                value={formData.age}
+                onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-300 rounded-2xl text-base text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Consultation Date</label>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input 
+                type="date" 
+                required
+                value={formData.eventDate}
+                onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-300 rounded-2xl text-base text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition"
+              />
+              <button 
+                type="button" 
+                onClick={handleFetchSlots}
+                disabled={loadingSlots}
+                className="bg-sky-600 text-white px-6 py-3.5 rounded-2xl font-semibold text-base hover:bg-sky-700 transition disabled:opacity-50 whitespace-nowrap shadow-md flex items-center justify-center gap-2"
+              >
+                {loadingSlots ? "Loading..." : "⬇ Load Available Slots"}
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 mt-1.5 italic">👆 Click &quot;Load Available Slots&quot; to fetch and populate the time options below.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Select Time Slot</label>
+            <select 
+              required
+              value={formData.selectedSlot}
+              onChange={(e) => setFormData({ ...formData, selectedSlot: e.target.value })}
+              className="w-full px-4 py-3.5 bg-slate-50 border border-slate-300 rounded-2xl text-base text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition cursor-pointer"
+            >
+              <option value="">-- Choose from loaded slots above --</option>
+              {availableSlots.map((slot, index) => (
+                <option key={index} value={slot}>{slot}</option>
+              ))}
+            </select>
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={submitting}
+            className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-base hover:bg-emerald-700 transition shadow-xl shadow-emerald-600/30 disabled:opacity-50 mt-6 tracking-wide"
+          >
+            {submitting ? "Processing Booking..." : "Confirm & Book Appointment"}
           </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }
