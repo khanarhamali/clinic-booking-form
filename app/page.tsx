@@ -29,20 +29,33 @@ export default function BookingPage() {
       const res = await fetch(`/api/book?eventDate=${formData.eventDate}`);
       const data = await res.json();
       
+      let slotsArray: string[] = [];
       if (Array.isArray(data)) {
-        setAvailableSlots(data);
-      } else if (data.slots) {
-        setAvailableSlots(data.slots);
-      } else {
-        setAvailableSlots([
+        slotsArray = data.map(item => (typeof item === 'string' ? item : (item.summary || item.slot || JSON.stringify(item))));
+      } else if (data && typeof data === 'object') {
+        const possibleSlots = data.slots || data.data || data.result;
+        if (Array.isArray(possibleSlots)) {
+          slotsArray = possibleSlots.map(item => (typeof item === 'string' ? item : (item.summary || item.slot || JSON.stringify(item))));
+        }
+      }
+
+      if (slotsArray.length === 0) {
+        slotsArray = [
           "09:00:00 AM - 10:00:00 AM",
           "10:00:00 AM - 11:00:00 AM",
           "02:00:00 PM - 03:00:00 PM"
-        ]);
+        ];
       }
+
+      setAvailableSlots(slotsArray);
       toast.success("Available time slots retrieved below!");
     } catch (err) {
       toast.error("Failed to load slots. Please try again.");
+      setAvailableSlots([
+        "09:00:00 AM - 10:00:00 AM",
+        "10:00:00 AM - 11:00:00 AM",
+        "02:00:00 PM - 03:00:00 PM"
+      ]);
     } finally {
       setLoadingSlots(false);
     }
