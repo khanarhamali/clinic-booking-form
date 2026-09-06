@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f4f4f9; }
+        .box { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 360px; text-align: center; }
+        .subtitle { font-size: 13px; color: #555; margin-bottom: 20px; line-height: 1.4; }
+        .date-row { display: flex; gap: 8px; margin: 10px 0; align-items: center; }
+        input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="date"], select { width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        input[type="date"] { flex: 1; margin: 0; }
+        .btn-slots { background: #2196F3; color: white; border: none; padding: 9px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; white-space: nowrap; }
+        .btn-slots:hover { background: #0b7dda; }
+        select { background: white; cursor: pointer; }
+        button[type="submit"] { background: #4CAF50; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 15px; margin-top: 12px; }
+        button[type="submit"]:hover { background: #45a049; }
+        .form-group { text-align: left; margin-bottom: 5px; font-size: 13px; color: #333; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h3>Book Appointment</h3>
+        <div class="subtitle">
+            <strong>Dr. John Doe</strong><br>
+            Consultation Timing: Monday to Friday<br>
+            9:00 AM to 5:00 PM
+        </div>
+        <form onsubmit="submitBooking(event)">
+            
+            <div class="form-group">Full Name</div>
+            <input type="text" name="fullName" placeholder="Enter your full name" required minlength="3" title="Minimum 3 characters required">
+
+            <div class="form-group">Email Address</div>
+            <input type="email" name="email" placeholder="example@email.com" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Please enter a valid email address (e.g., user@domain.com)">
+
+            <div class="form-group">Phone Number</div>
+            <input type="tel" name="phone" placeholder="03001234567" required pattern="[0-9]{10,12}" title="Enter a valid phone number (e.g., 03001234567)">
+
+            <div class="form-group">Age</div>
+            <input type="number" name="age" placeholder="Enter your age" min="10" max="100" required title="Age must be between 10 and 100">
+
+            <div class="form-group">Pick a Date</div>
+            <div class="date-row">
+                <input type="date" id="eventDate" name="eventDate" required>
+                <button type="button" class="btn-slots" onclick="fetchAvailableSlots()">Available Slots</button>
+            </div>
+            
+            <div class="form-group" style="margin-top: 8px;">Select Time Slot</div>
+            <select id="slots-dropdown" name="selectedSlot" required>
+                <option value="">-- Select Time Slot --</option>
+            </select>
+            
+            <button type="submit" id="submit-btn">Submit Booking</button>
+        </form>
+    </div>
+
+    <script>
+        window.onload = function() {
+            if (window.location.search.length > 0) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        };
+
+        function timeToMinutes(timeStr) {
+            const [time, modifier] = timeStr.split(' ');
+            let [hours, minutes, seconds] = time.split(':').map(Number);
+            if (modifier === 'PM' && hours < 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+            return hours * 60 + minutes;
+        }
+
+        async function fetchAvailableSlots() {
+            const dateValue = document.getElementById('eventDate').value;
+            const dropdown = document.getElementById('slots-dropdown');
+            
+            if (!dateValue) {
+                alert('Please select a date first!');
+                return;
+            }
+
+            dropdown.innerHTML = '<option value="">Loading slots...</option>';
+
+            try {
+                const response = await fetch(`https://workflowtest3.app.n8n.cloud/webhook/bade1297-9902-4bc3-9553-2d036cf920be?eventDate=${dateValue}`);
+                const data = await response.json();
+                
+                dropdown.innerHTML = '<option value="">-- Select Time Slot --</option>';
+                
+                let workingSlots = [
+                    { start: "09:00:00 AM", end: "10:00:00 AM", startMin: 540, endMin: 600 },
+                    { start: "10:00:00 AM", end: "11:00:00 AM", startMin: 600, endMin: 660 },
+                    { start: "11:00:00 AM", end: "12:00:00 PM", startMin: 660, endMin: 720 },
+                    { start: "12:00:00 PM", end: "01:00:00 PM", startMin: 720, endMin: 780 },
+                    { start: "01:00:00 PM", end: "02:00:00 PM", startMin: 780, endMin: 840 },
+                    { start: "02:00:00 PM", end: "03:00:00 PM", startMin: 840, endMin: 900 },
+                    { start: "03:00:00 PM", end: "04:00:00 PM", startMin: 900, endMin: 960 },
+                    { start: "04:00:00 PM", end: "05:00:00 PM", startMin: 960, endMin: 1020 }
+                ];
+
+                const busyEvents = Array.isArray(data) ? data : (data.start ? [data] : []);
+
+                const availableSlots = workingSlots.filter(slot => {
+                    let isBusy = false;
+                    busyEvents.forEach(ev => {
+                        if (!ev.start || !ev.end) return;
+                        const evStartMin = timeToMinutes(ev.start.time);
+                        const evEndMin = timeToMinutes(ev.end.time);
+
+                        if (slot.startMin < evEndMin && slot.endMin > evStartMin) {
+                            isBusy = true;
+                        }
+                    });
+                    return !isBusy;
+                });
+
+                if (availableSlots.length === 0) {
+                    dropdown.innerHTML = '<option value="">No available slots for this date</option>';
+                    return;
+                }
+
+                availableSlots.forEach(slot => {
+                    const option = document.createElement('option');
+                    const slotText = `${slot.start} - ${slot.end}`;
+                    option.value = slotText;
+                    option.textContent = slotText;
+                    dropdown.appendChild(option);
+                });
+
+            } catch (error) {
+                dropdown.innerHTML = '<option value="">Error fetching slots</option>';
+            }
+        }
+
+        async function submitBooking(event) {
+            event.preventDefault();
+            const form = event.target;
+            const submitBtn = document.getElementById('submit-btn');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            const formData = new FormData(form);
+            const queryString = new URLSearchParams(formData).toString();
+            
+            try {
+                const response = await fetch(`https://workflowtest3.app.n8n.cloud/webhook/0b3399aa-907f-43aa-a934-a47a0ce50c33?${queryString}`);
+                
+                if (response.ok) {
+                    alert('Appointment successfully booked and confirmation email sent!');
+                    form.reset();
+                    document.getElementById('slots-dropdown').innerHTML = '<option value="">-- Select Time Slot --</option>';
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                } else {
+                    alert('There was an issue with your booking. Please try again.');
+                }
+            } catch (error) {
+                alert('Network connection error.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Booking';
+            }
+        }
+    </script>
+</body>
+</html>
