@@ -183,26 +183,26 @@ export default function BookingPage() {
 
           <div style={{ marginBottom: '6px' }}>
             <div style={labelStyle}>Consultation Date</div>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px', alignItems: 'center' }}>
               <input 
                 type="date" 
                 required 
                 value={form.eventDate} 
                 onChange={e => setForm({...form, eventDate: e.target.value})} 
-                style={{ ...inputStyle, flex: 1 }} 
+                style={inputStyle} 
               />
               <button 
                 type="button" 
                 onClick={fetchAvailableSlots} 
-                style={{ background: '#0284c7', color: 'white', border: 'none', padding: '11px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', whiteSpace: 'nowrap', boxShadow: '0 4px 6px -1px rgba(2, 132, 199, 0.2)' }}
+                style={{ background: '#0284c7', color: 'white', border: 'none', padding: '11px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: '600', whiteSpace: 'nowrap', boxShadow: '0 4px 6px -1px rgba(2, 132, 199, 0.2)' }}
               >
-                {loadingSlots ? 'Loading...' : '↓ Load Available Slots'}
+                {loadingSlots ? 'Loading...' : '↓ Get Slots'}
               </button>
             </div>
           </div>
 
           <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic', marginBottom: '16px' }}>
-            👉 Click "Load Available Slots" to fetch and populate the time options below.
+            👉 Click "Get Slots" to fetch and populate the time options below.
           </div>
 
           <div style={{ marginBottom: '20px' }}>
