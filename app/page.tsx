@@ -13,6 +13,7 @@ export default function BookingPage() {
   const [slots, setSlots] = useState<{ start: string; end: string }[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [slotsFetched, setSlotsFetched] = useState(false); // Nayi state slots show karne ke liye
 
   const timeToMinutes = (timeStr: string) => {
     const [time, modifier] = timeStr.split(' ');
@@ -57,6 +58,7 @@ export default function BookingPage() {
       });
 
       setSlots(available);
+      setSlotsFetched(true); // Slots load hone ke baad section visible ho jayega
     } catch (err) {
       alert('Error fetching slots');
     } finally {
@@ -79,6 +81,7 @@ export default function BookingPage() {
         alert('Appointment successfully booked and confirmation email sent!');
         setForm({ fullName: '', email: '', phone: '', age: '', eventDate: '', selectedSlot: '' });
         setSlots([]);
+        setSlotsFetched(false); // Form reset hone par dubara hide ho jaye ga
       } else {
         alert('There was an issue with your booking.');
       }
@@ -188,7 +191,10 @@ export default function BookingPage() {
                 type="date" 
                 required 
                 value={form.eventDate} 
-                onChange={e => setForm({...form, eventDate: e.target.value})} 
+                onChange={e => {
+                  setForm({...form, eventDate: e.target.value, selectedSlot: ''});
+                  setSlotsFetched(false); // Date change hone par slots dobara hide ho jayein
+                }} 
                 style={inputStyle} 
               />
               <button 
@@ -205,29 +211,35 @@ export default function BookingPage() {
             👉 Click "Get Slots" to fetch and populate the time options below.
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <div style={labelStyle}>Select Time Slot</div>
-            <select 
-              required 
-              value={form.selectedSlot} 
-              onChange={e => setForm({...form, selectedSlot: e.target.value})} 
-              style={{ ...inputStyle, background: '#f8fafc', cursor: 'pointer' }}
-            >
-              <option value="">-- Choose from loaded slots above --</option>
-              {slots.map((s, idx) => {
-                const text = `${s.start} - ${s.end}`;
-                return <option key={idx} value={text}>{text}</option>;
-              })}
-            </select>
-          </div>
+          {/* Yeh section sirf tab show hoga jab user "Get Slots" par click kar dega */}
+          {slotsFetched && (
+            <>
+              <div style={{ marginBottom: '20px' }}>
+                <div style={labelStyle}>Select Time Slot</div>
+                <select 
+                  required 
+                  value={form.selectedSlot} 
+                  onChange={e => setForm({...form, selectedSlot: e.target.value})} 
+                  style={{ ...inputStyle, background: '#f8fafc', cursor: 'pointer' }}
+                >
+                  <option value="">-- Choose from loaded slots above --</option>
+                  {slots.map((s, idx) => {
+                    const text = `${s.start} - ${s.end}`;
+                    return <option key={idx} value={text}>{text}</option>;
+                  })}
+                </select>
+              </div>
 
-          <button 
-            type="submit" 
-            disabled={submitting} 
-            style={{ background: '#059669', color: 'white', border: 'none', padding: '14px', width: '100%', borderRadius: '10px', cursor: 'pointer', fontSize: '15px', fontWeight: '650', boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)', transition: 'background 0.2s' }}
-          >
-            {submitting ? 'Submitting...' : 'Confirm & Book Appointment'}
-          </button>
+              <button 
+                type="submit" 
+                disabled={submitting} 
+                style={{ background: '#059669', color: 'white', border: 'none', padding: '14px', width: '100%', borderRadius: '10px', cursor: 'pointer', fontSize: '15px', fontWeight: '650', boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)', transition: 'background 0.2s' }}
+              >
+                {submitting ? 'Submitting...' : 'Confirm & Book Appointment'}
+              </button>
+            </>
+          )}
+
         </form>
       </div>
     </div>
