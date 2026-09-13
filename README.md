@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Clinic Appointment Booking Portal
 
-## Getting Started
+A modern, full-stack patient appointment booking system built with **Next.js** and **TypeScript**, powered by **n8n workflows**, **Google Sheets**, and **Google Calendar**.
 
-First, run the development server:
+---
 
+## Target Audience & Value Proposition
+
+* **Audience:** Beneficial for doctors, clinics, and healthcare providers.
+* **Core Value Proposition:** A fully automated, low-cost system that operates **24/7** (even on off days) without requiring any manual staff intervention. It can be seamlessly integrated into both your website and WhatsApp channels.
+
+---
+
+## Tech Stack
+
+* **Frontend:** Next.js (React / App Router), TypeScript, Custom CSS
+* **Backend Integration:** Next.js API Routes / n8n Webhooks
+* **Automation & Storage:** n8n, Google Sheets, Google Calendar API, Gmail API
+* **Deployment & Hosting:** Docker, Ubuntu Linux (DigitalOcean)
+
+---
+
+## Key Features & Workflow
+
+* **Centralized Dashboard:** View all patient bookings at a glance in a single, organized Google Sheet.
+* **Dynamic Slot Management:** Fetches events live from Google Calendar to display accurate, real-time available slots. Once a time slot is successfully booked, it automatically becomes unavailable to subsequent patients, preventing double bookings.
+* **Conditional UI Flow:** Time slot selection and confirmation controls remain hidden until the user queries available dates via the "Get Slots" button.
+* **Automated Confirmations:** When a patient submits details, an event is automatically created in Google Calendar, details are logged in Google Sheets, and a professional HTML confirmation email is dispatched to the patient via Gmail (with a copy sent for your reference).
+* **AI & Scalability Ready:** Easily extendable with advanced workflows, such as AI agents, to power interactive question-and-answer systems.
+
+---
+
+## Key Benefits
+
+* Completely automated operations with zero manual coordination.
+* Reduced patient no-shows and eliminated scheduling conflicts.
+* A budget-friendly, highly reliable setup running 24/7.
+
+---
+
+## Local Setup & Installation
+
+1. **Clone the repository:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/khanarhamali/clinic-booking.git
+cd clinic-booking
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. **Install dependencies:**
+```bash
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+3. **Configure Environment Variables:**
+Create a `.env.local` file in the root directory and map your development webhook endpoints:
+```env
+NEXT_PUBLIC_SLOTS_WEBHOOK=your_development_slots_webhook
+NEXT_PUBLIC_BOOK_WEBHOOK=your_development_booking_webhook
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+4. **Run the development server:**
+```bash
+npm run dev
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to test the client interface.
+---
+
+## Backend Workflow Architecture
+
+This frontend acts as the user interface layer. It communicates via API routes or direct webhooks to an automated **n8n** server instance, which handles Google Calendar event creation and automated patient confirmation emails.
+
