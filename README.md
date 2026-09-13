@@ -1,3 +1,4 @@
+```markdown
 # Clinic Appointment Booking Portal
 
 A modern, full-stack patient appointment booking system built with **Next.js** and **TypeScript**, powered by **n8n workflows**, **Google Sheets**, and **Google Calendar**.
@@ -41,12 +42,11 @@ A modern, full-stack patient appointment booking system built with **Next.js** a
 ## Local Setup & Installation
 
 1. **Clone the repository:**
-```bash
-git clone https://github.com/khanarhamali/clinic-booking.git
-cd clinic-booking
+   ```bash
+   git clone [https://github.com/khanarhamali/clinic-booking.git](https://github.com/khanarhamali/clinic-booking.git)
+   cd clinic-booking
 
 ```
-
 
 2. **Install dependencies:**
 ```bash
@@ -71,11 +71,20 @@ npm run dev
 ```
 
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to test the client interface locally.
-Open [https://clinic-booking-form.vercel.app/](https://clinic-booking-form.vercel.app/) in your browser to test the live client interface.
+
+---
+
+## Access Links
+
+* **Local Interface:** Open [http://localhost:3000](http://localhost:3000) in your browser to test locally.
+* **Live Demo:** Open [https://clinic-booking-form.vercel.app/](https://clinic-booking-form.vercel.app/) to test the live client interface.
+
 ---
 
 ## Backend Workflow Architecture
 
 This frontend acts as the user interface layer. It communicates via API routes or direct webhooks to an automated **n8n** server instance, which handles Google Calendar event creation and automated patient confirmation emails.
 
+```
+
+```
