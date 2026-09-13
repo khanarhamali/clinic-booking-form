@@ -71,7 +71,8 @@ npm run dev
 ```
 
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to test the client interface.
+Open [http://localhost:3000](http://localhost:3000) in your browser to test the client interface locally.
+Open [https://clinic-booking-form.vercel.app/](https://clinic-booking-form.vercel.app/) in your browser to test the live client interface.
 ---
 
 ## Backend Workflow Architecture
